@@ -245,6 +245,8 @@ window.addEventListener("load", async () => {
     }px`;
   }
 
+  window.parent.postMessage(true);
+
   let direction = true;
   while (true) {
     if (main.clientHeight - window.innerHeight > 0) {
