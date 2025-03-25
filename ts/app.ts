@@ -34,23 +34,52 @@ function getDataForDay(date: Date): data[] {
     [
       new data("4", "1a", "M", "0.10 (0.15)", "Ab"),
       new data("2", "4b", "D", "0.14", "Ab", true),
+      new data("5", "3.1", "KS", "0.62", "Dd", true),
       new data("5", "9.2", "G", "1.02", "Bc", true),
       new data("12", "200.1", "E", "2.46", "De", true),
-      new data("2", ["a6", "5d"], "D", "7.11 (2.44)", "De"),
+      new data("2", ["a6", "5d", "6a", "6.1", "6.0"], "D", "7.11 (2.44)", "De"),
     ],
+    [],
     [],
   ];
   let _ = [..."abcdefghijklmnopqrstuvwxyz"];
   let l = 20;
+  for (let _index = 1; _index <= 2; _index++) {
+    for (let i = 0; i < l; i++) {
+      EXAMPLE_DATA[_index].push(
+        new data(
+          random(20, 4).toString(_index == 1 ? 16 : 10),
+          random(6) == 1
+            ? Math.floor((l + 1 - i) / 2).toString() + (i % 2 == 0 ? "a" : "b")
+            : [
+                Math.floor((l + 1 - i) / 2).toString() +
+                  (i % 2 == 0 ? "a" : "b"),
+                Math.floor((l + 1 - i) / 2).toString() +
+                  (i % 2 != 0 ? "a" : "b"),
+              ],
+          ["D", "E", "F", "M", "KS", "G"][random(6)],
+          `${random(2)}.${random(18) > 9 ? 0 : random(6)}${random(9)}`,
+          _[random(_.length)].toUpperCase() + _[random(_.length)].toLowerCase(),
+          true
+        )
+      );
+    }
+  }
   for (let i = 0; i < l; i++) {
-    EXAMPLE_DATA[1].push(
+    EXAMPLE_DATA[2].push(
       new data(
         random(20, 4).toString(16),
-        random(6) == 1
-          ? Math.floor((l + 1 - i) / 2).toString() + (i % 2 == 0 ? "a" : "b")
+        random(6) != 1
+          ? Math.floor((l + 1 - i) / 2).toString() +
+            "." +
+            Math.floor((l + 1 - i) / 5).toString()
           : [
-              Math.floor((l + 1 - i) / 2).toString() + (i % 2 == 0 ? "a" : "b"),
-              Math.floor((l + 1 - i) / 2).toString() + (i % 2 != 0 ? "a" : "b"),
+              Math.floor((l + random(9) - i) / 2).toString() +
+                "." +
+                Math.floor((l + random(9) - i) / 5).toString(),
+              Math.floor((l + random(9) - i) / 2).toString() +
+                "." +
+                Math.floor((l + random(9) - i) / 5).toString(),
             ],
         ["D", "E", "F", "M", "KS", "G"][random(6)],
         `${random(2)}.${random(18) > 9 ? 0 : random(6)}${random(9)}`,
@@ -107,14 +136,9 @@ window.addEventListener("load", async () => {
     AeqB = 0,
     AltB = -1;
 
-  let c = false,
-    d = false;
-
-  let result: HTMLElement[][] = [];
-
-  let klassen = {};
+  let klassen: { [id: string]: HTMLElement[][] } = {};
   getDataForDay(date)
-    /* .sort((a: data, b: data) => {
+    .sort((a: data, b: data) => {
       let r = /-?\d+/;
       let sA = a.stunde.match(r),
         sB = b.stunde.match(r);
@@ -124,75 +148,93 @@ window.addEventListener("load", async () => {
         else return AltB;
       } else if (sA) return AltB;
       return AgtB;
-    }) */
-
+    })
     .forEach((i: data, index: number, array: data[]) => {
       console.log("Processing", i);
-      let r = [];
 
       // @ts-ignore
       let _: string[] = i.klasse;
       if (typeof i.klasse == "string") _ = [i.klasse];
 
       _.forEach((k: string) => {
-        let klasse1 = document.createElement("span");
-        klasse1.innerText = k;
-        klasse1.classList.add("klasse1", c ? "c1" : "c0");
-        r.push(klasse1);
+        if (!Object.keys(klassen).includes(k)) klassen[k] = [];
+        let a = [];
 
         let stunde = document.createElement("span");
         stunde.innerText = i.stunde;
-        stunde.classList.add("stunde", d ? "d1" : "d0");
-        r.push(stunde);
+        stunde.classList.add("stunde");
+        a.push(stunde);
 
         let klasse = document.createElement(i.ausfall ? "s" : "span");
         klasse.innerText =
           typeof i.klasse == "string" ? i.klasse : i.klasse.join(", ");
-        klasse.classList.add("klasse", d ? "d1" : "d0");
-        r.push(klasse);
+        klasse.classList.add("klasse");
+        a.push(klasse);
 
         let fach = document.createElement(i.ausfall ? "s" : "span");
         fach.innerText = i.fach;
-        fach.classList.add("fach", d ? "d1" : "d0");
-        r.push(fach);
+        fach.classList.add("fach");
+        a.push(fach);
 
         let raum = document.createElement(i.ausfall ? "s" : "span");
         raum.innerText = i.raum;
-        raum.classList.add("raum", d ? "d1" : "d0");
-        r.push(raum);
+        raum.classList.add("raum");
+        a.push(raum);
 
         let lehrkraft = document.createElement(i.ausfall ? "s" : "span");
         lehrkraft.innerText = i.lehrkraft;
-        lehrkraft.classList.add("lehrkraft", d ? "d1" : "d0");
-        r.push(lehrkraft);
+        lehrkraft.classList.add("lehrkraft");
+        a.push(lehrkraft);
 
-        d = !d;
+        klassen[k].push(a);
       });
-
-      if (index != array.length - 1) {
-        let e = document.createElement("div");
-        e.classList.add("p");
-        r.push(e);
-      }
-
-      c = !c;
-      result.push(r);
     });
-  result
-    /* .sort((a: HTMLElement[], b: HTMLElement[]) => {
-      let r = /-?\d+(\w+)?/;
-      let kA = a[0].innerText.match(r),
-        kB = b[0].innerText.match(r);
-      console.log(kA, kB);
+
+  let c = false,
+    d = false;
+  Object.keys(klassen)
+    .sort((a: string, b: string) => {
+      let r = /-?\d+\w*/;
+      let kA = a.match(r),
+        kB = b.match(r);
       if (kA && kB) {
         if (parseInt(kA[0], 36) > parseInt(kB[0], 36)) return AgtB;
         else if (parseInt(kA[0], 36) == parseInt(kB[0], 36)) return AeqB;
         else return AltB;
       } else if (kA) return AltB;
       return AgtB;
-    }) */
-    .forEach((e: HTMLElement[]) => {
-      e.forEach((e) => main.appendChild(e));
+    })
+    .sort((a: string, b: string) => {
+      let r = /-?\d+(?:\.\d+)?/;
+      let kA = a.match(r),
+        kB = b.match(r);
+      if (kA && kB) {
+        if (Number(kA[0]) > Number(kB[0])) return AgtB;
+        else if (Number(kA[0]) == Number(kB[0])) return AeqB;
+        else return AltB;
+      } else if (kA) return AltB;
+      return AgtB;
+    })
+    .forEach((k: string) => {
+      klassen[k].forEach((a: HTMLElement[]) => {
+        let klasse1 = document.createElement("span");
+        klasse1.innerText = k;
+        klasse1.classList.add("klasse1", c ? "c1" : "c0");
+        main.appendChild(klasse1);
+
+        a.forEach((e: HTMLElement) => {
+          e.classList.add(d ? "d1" : "d0");
+          main.appendChild(e);
+        });
+
+        d = !d;
+      });
+
+      let e = document.createElement("div");
+      e.classList.add("p");
+      main.appendChild(e);
+
+      c = !c;
     });
 
   for (let i = 0; i < 5; i++) {
