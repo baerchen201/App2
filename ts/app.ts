@@ -80,8 +80,13 @@ window.addEventListener("load", async () => {
 
   let date = new Date(new Date().valueOf() + 86400000 * day);
 
-  if (date.getDay() > 5) {
-    date = new Date(date.valueOf() + 86400000 * (date.getDay() - 5));
+  switch (date.getDay()) {
+    case 6:
+      date = new Date(date.valueOf() + 86400000 * 2);
+      break;
+    case 0:
+      date = new Date(date.valueOf() + 86400000);
+      break;
   }
 
   document.querySelector("h2")!.innerText += date.toLocaleDateString("de-DE", {
