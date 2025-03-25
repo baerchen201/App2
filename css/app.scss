@@ -1,3 +1,5 @@
+@use "loading";
+
 body {
   margin: 0;
   $border-width: 2px;
@@ -36,7 +38,7 @@ body {
     }
   }
 
-  > div:not(.loading) {
+  > div {
     position: absolute;
     z-index: -1;
     height: fit-content;
@@ -120,5 +122,22 @@ body {
       grid-column: 1/7;
       height: 5px;
     }
+  }
+
+  &.updating::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+
+    animation: win10loading 3s infinite;
+    font-family: "Segoe Boot Semilight";
+    font-size: 72px;
+  }
+
+  &.updating::after {
+    content: "" !important;
   }
 }

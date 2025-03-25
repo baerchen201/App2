@@ -237,39 +237,44 @@ window.addEventListener("load", async () => {
       c = !c;
     });
 
-  for (let i = 0; i < 5; i++) {
-    const e = document.querySelector("span")!.children[i] as HTMLElement;
-    e.style.top = `calc(${main.getBoundingClientRect().y}px - 1em - 4px)`;
-    e.style.left = `${
-      (main.children[i + 1] as HTMLElement).getBoundingClientRect().x
-    }px`;
-  }
+  window.addEventListener("resize", () => {
+    main.getAnimations().forEach((a) => a.cancel());
+    for (let i = 0; i < 5; i++) {
+      const e = document.querySelector("span")!.children[i] as HTMLElement;
+      e.style.top = `calc(${main.getBoundingClientRect().y}px - 1em - 4px)`;
+      e.style.left = `${
+        (main.children[i + 1] as HTMLElement).getBoundingClientRect().x
+      }px`;
+    }
+  });
+  window.dispatchEvent(new Event("resize"));
 
   window.parent.postMessage(true);
+  document.body.classList.remove("updating");
 
   let direction = true;
   while (true) {
     if (main.clientHeight - window.innerHeight > 0) {
-      await new Promise((resolve, reject) =>
-        main
-          .animate(
-            [
-              { transform: "none" },
-              {
-                transform: `translateY(${-(
-                  main.clientHeight - window.innerHeight
-                )}px)`,
-              },
-            ],
+      await new Promise((resolve, reject) => {
+        let a = main.animate(
+          [
+            { transform: "none" },
             {
-              duration: (main.clientHeight - window.innerHeight) * 30,
-              direction: direction ? "normal" : "reverse",
-              fill: "forwards",
-              delay: 1000,
-            }
-          )
-          .addEventListener("finish", resolve)
-      );
+              transform: `translateY(${-(
+                main.clientHeight - window.innerHeight
+              )}px)`,
+            },
+          ],
+          {
+            duration: (main.clientHeight - window.innerHeight) * 30,
+            direction: direction ? "normal" : "reverse",
+            fill: "forwards",
+            delay: 1000,
+          }
+        );
+        a.addEventListener("finish", resolve);
+        a.addEventListener("cancel", resolve);
+      });
       direction = !direction;
     } else await new Promise((resolve, reject) => setTimeout(resolve, 10000));
   }

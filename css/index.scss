@@ -1,3 +1,5 @@
+@use "loading";
+
 body {
   display: flex;
   justify-content: space-between;
@@ -9,18 +11,5 @@ body {
   iframe {
     width: 45%;
     height: 100%;
-  }
-
-  &.updating::after {
-    content: "Lädt...";
-    position: fixed;
-    inset: 0;
-    background: #fffc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 4rem;
-    font-family: Roboto, "Segoe UI", system-ui;
-    backdrop-filter: blur(5px);
   }
 }
