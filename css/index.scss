@@ -1,0 +1,13 @@
+body {
+  display: flex;
+  justify-content: space-between;
+
+  $margin: 8px;
+  margin: $margin;
+  height: calc(100vh - $margin * 2);
+
+  iframe {
+    width: 45%;
+    height: 100%;
+  }
+}

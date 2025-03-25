@@ -1,0 +1,124 @@
+body {
+  margin: 0;
+  $border-width: 2px;
+  height: calc(100vh - $border-width * 2);
+  border: $border-width ridge black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+
+  user-select: none;
+
+  > h2,
+  > h4,
+  > span {
+    background: #fff;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+    font-family: Roboto, "Segoe UI", system-ui;
+  }
+  > h2 {
+    height: 2rem;
+    font-weight: 600;
+  }
+  > h4 {
+    height: 1.3rem;
+    font-weight: 600;
+  }
+  > span {
+    height: 2rem;
+    font-size: 130%;
+
+    > span {
+      position: fixed;
+    }
+  }
+
+  > div {
+    position: absolute;
+    z-index: -1;
+    height: fit-content;
+    margin: 0 10%;
+    top: 5.3rem;
+
+    display: grid;
+    grid-template-columns: repeat(6, max-content);
+    grid-auto-rows: max-content;
+    gap: 2.5px;
+
+    justify-content: center;
+
+    --c0: #777;
+    --c1: #999;
+    &.d0 {
+      --c0: #00c000;
+      --c1: #12d299;
+    }
+    &.d1 {
+      --c0: #0181c0;
+      --c1: #1dc4f9;
+    }
+    &.d2 {
+      --c0: #903;
+      --c1: #b15;
+    }
+
+    > s,
+    > span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 2.25rem;
+
+      font-family: Roboto, "Segoe UI", system-ui;
+      font-size: 130%;
+
+      &.c0,
+      &.d0 {
+        background: var(--c0);
+      }
+      &.c1,
+      &.d1 {
+        background: var(--c1);
+      }
+
+      &.klasse1 {
+        margin-right: 12px;
+        padding: 0 20px;
+        min-width: 75px;
+      }
+      &.stunde {
+        padding: 0 10px;
+        min-width: 50px;
+      }
+      &.klasse {
+        padding: 0 5px;
+        min-width: 100px;
+      }
+      &.fach {
+        padding: 0 5px;
+        min-width: 50px;
+      }
+      &.raum {
+        padding: 0 5px;
+        min-width: 75px;
+      }
+      &.lehrkraft {
+        padding: 0 5px;
+        min-width: 90px;
+      }
+    }
+
+    > s {
+      text-decoration-thickness: 2px;
+      text-decoration-color: #00000088;
+    }
+
+    > div.p {
+      grid-column: 1/7;
+      height: 5px;
+    }
+  }
+}
