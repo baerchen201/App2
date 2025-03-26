@@ -88,3 +88,8 @@ try:
         raise ValueError("Non-200 response")
 except ValueError as e:
     err(f"An error occurred while requesting timetable:\n{type(e).__name__} - {e}")
+
+try:
+    get(f"{config["server"]}/saml/logout", cookies=auth.cookies)
+except Exception as e:
+    pass
