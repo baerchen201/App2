@@ -34,7 +34,7 @@ except (
     KeyError,
     ValueError,
 ) as e:
-    err(f"An error occurred while loading config.json: {type(e).__name__} - {e}")
+    err(f"An error occurred while loading config.json:\n{type(e).__name__} - {e}")
 
 
 auth = post(
@@ -56,9 +56,10 @@ try:
         case "SUCCESS":
             pass
         case _:
+            print(auth.json())
             raise ValueError(f"Non-SUCCESS response: {state}")
 except (json.decoder.JSONDecodeError, PermissionError, ValueError) as e:
-    err(f"An error occurred while requesting authentication: {type(e).__name__} - {e}")
+    err(f"An error occurred while requesting authentication:\n{type(e).__name__} - {e}")
 
 auth_new = get(f"{config["server"]}/api/token/new", cookies=auth.cookies)
 try:
@@ -66,7 +67,7 @@ try:
         raise ValueError("Non-200 response")
     token = "Bearer " + auth_new.text
 except ValueError as e:
-    err(f"An error occurred while requesting token: {type(e).__name__} - {e}")
+    err(f"An error occurred while requesting token:\n{type(e).__name__} - {e}")
 
 offset = 0
 try:
@@ -86,4 +87,4 @@ try:
     if entries.status_code != 200:
         raise ValueError("Non-200 response")
 except ValueError as e:
-    err(f"An error occurred while requesting token: {type(e).__name__} - {e}")
+    err(f"An error occurred while requesting timetable:\n{type(e).__name__} - {e}")
