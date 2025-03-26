@@ -255,170 +255,183 @@ window.addEventListener("load", async () => {
   let klassen: { [id: string]: (HTMLElement | string[])[][] } = {};
   getDataForDay(date)
     .then(async (__data: data[]) => {
-      __data
-        .sort((a: data, b: data) => {
-          let r = /-?\d+/;
-          let sA = a.stunde.match(r),
-            sB = b.stunde.match(r);
-          if (sA && sB) {
-            if (Number(sA[0]) > Number(sB[0])) return AgtB;
-            else if (Number(sA[0]) == Number(sB[0])) return AeqB;
-            else return AltB;
-          } else if (sA) return AltB;
-          return AgtB;
-        })
-        .forEach((i: data, index: number, array: data[]) => {
-          console.log("Processing", i);
+      try {
+        __data
+          .sort((a: data, b: data) => {
+            let r = /-?\d+/;
+            let sA = a.stunde.match(r),
+              sB = b.stunde.match(r);
+            if (sA && sB) {
+              if (Number(sA[0]) > Number(sB[0])) return AgtB;
+              else if (Number(sA[0]) == Number(sB[0])) return AeqB;
+              else return AltB;
+            } else if (sA) return AltB;
+            return AgtB;
+          })
+          .forEach((i: data, index: number, array: data[]) => {
+            console.log("Processing", i);
 
-          // @ts-ignore
-          let _: string[] = i.klasse;
-          if (typeof i.klasse == "string") _ = [i.klasse];
+            // @ts-ignore
+            let _: string[] = i.klasse;
+            if (typeof i.klasse == "string") _ = [i.klasse];
 
-          _.forEach((k: string) => {
-            if (!Object.keys(klassen).includes(k)) klassen[k] = [];
-            let a: (HTMLElement | string[])[] = [i.classes];
+            _.forEach((k: string) => {
+              if (!Object.keys(klassen).includes(k)) klassen[k] = [];
+              let a: (HTMLElement | string[])[] = [i.classes];
 
-            let stunde = document.createElement("span");
-            stunde.innerText = i.stunde;
-            stunde.classList.add("stunde", ...i.classes);
-            a.push(stunde);
+              let stunde = document.createElement("span");
+              stunde.innerText = i.stunde;
+              stunde.classList.add("stunde", ...i.classes);
+              a.push(stunde);
 
-            let klasse = document.createElement(i.ausfall ? "s" : "span");
-            klasse.innerText =
-              typeof i.klasse == "string" ? i.klasse : i.klasse.join(", ");
-            klasse.classList.add("klasse", ...i.classes);
-            a.push(klasse);
+              let klasse = document.createElement(i.ausfall ? "s" : "span");
+              klasse.innerText =
+                typeof i.klasse == "string" ? i.klasse : i.klasse.join(", ");
+              klasse.classList.add("klasse", ...i.classes);
+              a.push(klasse);
 
-            let fach = document.createElement(i.ausfall ? "s" : "span");
-            fach.innerText = i.fach;
-            fach.classList.add("fach", ...i.classes);
-            a.push(fach);
+              let fach = document.createElement(i.ausfall ? "s" : "span");
+              fach.innerText = i.fach;
+              fach.classList.add("fach", ...i.classes);
+              a.push(fach);
 
-            let raum = document.createElement(i.ausfall ? "s" : "span");
-            raum.innerText = i.raum;
-            raum.classList.add("raum", ...i.classes);
-            a.push(raum);
+              let raum = document.createElement(i.ausfall ? "s" : "span");
+              raum.innerText = i.raum;
+              raum.classList.add("raum", ...i.classes);
+              a.push(raum);
 
-            let lehrkraft = document.createElement(i.ausfall ? "s" : "span");
-            lehrkraft.innerText = i.lehrkraft;
-            lehrkraft.classList.add("lehrkraft", ...i.classes);
-            a.push(lehrkraft);
+              let lehrkraft = document.createElement(i.ausfall ? "s" : "span");
+              lehrkraft.innerText = i.lehrkraft;
+              lehrkraft.classList.add("lehrkraft", ...i.classes);
+              a.push(lehrkraft);
 
-            klassen[k].push(a);
+              klassen[k].push(a);
+            });
           });
-        });
 
-      if (Object.keys(klassen).length == 0) {
-        document.querySelector("span")!.innerText = "Keine Änderungen";
-        document.body.classList.add("none");
-        window.parent.postMessage(true);
-        document.body.classList.remove("updating");
-        return;
-      }
+        if (Object.keys(klassen).length == 0) {
+          document.querySelector("span")!.innerText = "Keine Änderungen";
+          document.body.classList.add("none");
+          window.parent.postMessage(true);
+          document.body.classList.remove("updating");
+          return;
+        }
 
-      let c = false,
-        d = false;
-      Object.keys(klassen)
-        .sort((a: string, b: string) => {
-          let r = /-?\d+\w*/;
-          let kA = a.match(r),
-            kB = b.match(r);
-          if (kA && kB) {
-            if (parseInt(kA[0], 36) > parseInt(kB[0], 36)) return AgtB;
-            else if (parseInt(kA[0], 36) == parseInt(kB[0], 36)) return AeqB;
-            else return AltB;
-          } else if (kA) return AltB;
-          return AgtB;
-        })
-        .sort((a: string, b: string) => {
-          let r = /-?\d+(?:\.\d+)?/;
-          let kA = a.match(r),
-            kB = b.match(r);
-          if (kA && kB) {
-            if (Number(kA[0]) > Number(kB[0])) return AgtB;
-            else if (Number(kA[0]) == Number(kB[0])) return AeqB;
-            else return AltB;
-          } else if (kA) return AltB;
-          return AgtB;
-        })
-        .forEach((k: string) => {
-          klassen[k].forEach((a: (HTMLElement | string[])[]) => {
-            let klasse1 = document.createElement("span");
-            klasse1.innerText = k;
-            klasse1.classList.add(
-              "klasse1",
-              c ? "c1" : "c0",
-              ...(a.shift() as string[])
-            );
-            main.appendChild(klasse1);
+        let c = false,
+          d = false;
+        Object.keys(klassen)
+          .sort((a: string, b: string) => {
+            let r = /-?\d+\w*/;
+            let kA = a.match(r),
+              kB = b.match(r);
+            if (kA && kB) {
+              if (parseInt(kA[0], 36) > parseInt(kB[0], 36)) return AgtB;
+              else if (parseInt(kA[0], 36) == parseInt(kB[0], 36)) return AeqB;
+              else return AltB;
+            } else if (kA) return AltB;
+            return AgtB;
+          })
+          .sort((a: string, b: string) => {
+            let r = /-?\d+(?:\.\d+)?/;
+            let kA = a.match(r),
+              kB = b.match(r);
+            if (kA && kB) {
+              if (Number(kA[0]) > Number(kB[0])) return AgtB;
+              else if (Number(kA[0]) == Number(kB[0])) return AeqB;
+              else return AltB;
+            } else if (kA) return AltB;
+            return AgtB;
+          })
+          .forEach((k: string) => {
+            klassen[k].forEach((a: (HTMLElement | string[])[]) => {
+              let klasse1 = document.createElement("span");
+              klasse1.innerText = k;
+              klasse1.classList.add(
+                "klasse1",
+                c ? "c1" : "c0",
+                ...(a.shift() as string[])
+              );
+              main.appendChild(klasse1);
 
-            (a as HTMLElement[]).forEach((e: HTMLElement) => {
-              e.classList.add(d ? "d1" : "d0");
-              main.appendChild(e);
+              (a as HTMLElement[]).forEach((e: HTMLElement) => {
+                e.classList.add(d ? "d1" : "d0");
+                main.appendChild(e);
+              });
+
+              d = !d;
             });
 
-            d = !d;
+            let e = document.createElement("div");
+            e.classList.add("p");
+            main.appendChild(e);
+
+            c = !c;
           });
 
-          let e = document.createElement("div");
-          e.classList.add("p");
-          main.appendChild(e);
-
-          c = !c;
+        window.addEventListener("resize", () => {
+          main.getAnimations().forEach((a) => a.cancel());
+          for (let i = 0; i < 5; i++) {
+            const e = document.querySelector("span")!.children[
+              i
+            ] as HTMLElement;
+            e.style.top = `calc(${
+              main.getBoundingClientRect().y
+            }px - 1em - 4px)`;
+            e.style.left = `${
+              (main.children[i + 1] as HTMLElement).getBoundingClientRect().x
+            }px`;
+          }
         });
+        window.dispatchEvent(new Event("resize"));
 
-      window.addEventListener("resize", () => {
-        main.getAnimations().forEach((a) => a.cancel());
-        for (let i = 0; i < 5; i++) {
-          const e = document.querySelector("span")!.children[i] as HTMLElement;
-          e.style.top = `calc(${main.getBoundingClientRect().y}px - 1em - 4px)`;
-          e.style.left = `${
-            (main.children[i + 1] as HTMLElement).getBoundingClientRect().x
-          }px`;
-        }
-      });
-      window.dispatchEvent(new Event("resize"));
+        window.parent.postMessage(true);
+        document.body.classList.remove("updating");
 
-      window.parent.postMessage(true);
-      document.body.classList.remove("updating");
-
-      let direction = true;
-      while (true) {
-        if (main.clientHeight - window.innerHeight > 0) {
-          await new Promise((resolve, reject) => {
-            let a = main.animate(
-              [
-                { transform: "none" },
+        let direction = true;
+        while (true) {
+          if (main.clientHeight - window.innerHeight > 0) {
+            await new Promise((resolve, reject) => {
+              let a = main.animate(
+                [
+                  { transform: "none" },
+                  {
+                    transform: `translateY(${-(
+                      main.clientHeight - window.innerHeight
+                    )}px)`,
+                  },
+                ],
                 {
-                  transform: `translateY(${-(
-                    main.clientHeight - window.innerHeight
-                  )}px)`,
-                },
-              ],
-              {
-                duration: (main.clientHeight - window.innerHeight) * 30,
-                direction: direction ? "normal" : "reverse",
-                fill: "forwards",
-                delay: 1000,
-              }
-            );
-            a.addEventListener("finish", resolve);
-            a.addEventListener("cancel", resolve);
-          });
-          direction = !direction;
-        } else
-          await new Promise((resolve, reject) => setTimeout(resolve, 10000));
+                  duration: (main.clientHeight - window.innerHeight) * 30,
+                  direction: direction ? "normal" : "reverse",
+                  fill: "forwards",
+                  delay: 1000,
+                }
+              );
+              a.addEventListener("finish", resolve);
+              a.addEventListener("cancel", resolve);
+            });
+            direction = !direction;
+          } else
+            await new Promise((resolve, reject) => setTimeout(resolve, 10000));
+        }
+      } catch (e: any) {
+        error(
+          "An error occurred while generating web content:",
+          `${e.name}: ${e.message}`
+        );
+        console.error(e);
       }
     })
     .catch((reason: { request: XMLHttpRequest; response: string } | Error) => {
       console.error("getDataForDay rejected:", reason);
 
-      if (reason instanceof Error)
+      if (reason instanceof Error) {
         error(
           "An error occurred while obtaining WebUntis data:",
           `${reason.name}: ${reason.message}`
         );
-      else
+        console.error(reason);
+      } else
         error(
           `${reason["request"].status} ${reason["request"].statusText}`,
           reason["response"],
