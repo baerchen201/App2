@@ -122,92 +122,94 @@ async function getDataForDay(date: Date): Promise<data[]> {
           xhr.responseText
         );
         let a: data[] = [];
-        json["days"][0]["gridEntries"].forEach(async (i: any) => {
-          if (i["status"] != "REGULAR")
-            a.push(
-              new data(
-                stunde(i["moved"] ?? i["duration"]),
-                [
-                  json["days"][0]["resource"]["shortName"],
-                  ...(() => {
-                    let _: string[] = [];
+        json["days"].forEach((day) => {
+          day["gridEntries"].forEach(async (i: any) => {
+            if (i["status"] != "REGULAR")
+              a.push(
+                new data(
+                  stunde(i["moved"] ?? i["duration"]),
+                  [
+                    day["resource"]["shortName"],
+                    ...(() => {
+                      let _: string[] = [];
+                      for (let _i = 1; _i <= 5; _i++) {
+                        let e = i[`position${_i}`];
+                        if (e)
+                          e.forEach((e: any) => {
+                            if (e["current"]["type"] == "CLASS")
+                              _.push(e["current"]["shortName"]);
+                          });
+                      }
+                      return _;
+                    })(),
+                  ],
+                  await new Promise((resolve, reject) => {
                     for (let _i = 1; _i <= 5; _i++) {
                       let e = i[`position${_i}`];
                       if (e)
                         e.forEach((e: any) => {
-                          if (e["current"]["type"] == "CLASS")
-                            _.push(e["current"]["shortName"]);
+                          if (e["current"]["type"] == "SUBJECT")
+                            resolve(e["current"]["shortName"]);
                         });
                     }
-                    return _;
+                  }),
+                  (() => {
+                    let added: string[] = [],
+                      removed: string[] = [];
+                    for (let _i = 1; _i <= 5; _i++) {
+                      let e = i[`position${_i}`];
+                      if (e)
+                        e.forEach((e: any) => {
+                          ["current", "removed"].forEach((_) => {
+                            if (e[_] && e[_]["type"] == "ROOM")
+                              switch (e[_]["status"]) {
+                                case "REMOVED":
+                                  removed.push(e[_]["shortName"]);
+                                  break;
+
+                                default:
+                                  added.push(e[_]["shortName"]);
+                                  break;
+                              }
+                          });
+                        });
+                    }
+                    return (
+                      `${added.join(", ")}` +
+                      (removed.length ? ` (${removed.join(", ")})` : "")
+                    );
                   })(),
-                ],
-                await new Promise((resolve, reject) => {
-                  for (let _i = 1; _i <= 5; _i++) {
-                    let e = i[`position${_i}`];
-                    if (e)
-                      e.forEach((e: any) => {
-                        if (e["current"]["type"] == "SUBJECT")
-                          resolve(e["current"]["shortName"]);
-                      });
-                  }
-                }),
-                (() => {
-                  let added: string[] = [],
-                    removed: string[] = [];
-                  for (let _i = 1; _i <= 5; _i++) {
-                    let e = i[`position${_i}`];
-                    if (e)
-                      e.forEach((e: any) => {
-                        ["current", "removed"].forEach((_) => {
-                          if (e[_] && e[_]["type"] == "ROOM")
-                            switch (e[_]["status"]) {
-                              case "REMOVED":
-                                removed.push(e[_]["shortName"]);
-                                break;
+                  (() => {
+                    let added: string[] = [],
+                      removed: string[] = [];
+                    for (let _i = 1; _i <= 5; _i++) {
+                      let e = i[`position${_i}`];
+                      if (e)
+                        e.forEach((e: any) => {
+                          ["current", "removed"].forEach((_) => {
+                            if (e[_] && e[_]["type"] == "TEACHER")
+                              switch (e[_]["status"]) {
+                                case "REMOVED":
+                                  removed.push(e[_]["shortName"]);
+                                  break;
 
-                              default:
-                                added.push(e[_]["shortName"]);
-                                break;
-                            }
+                                default:
+                                  added.push(e[_]["shortName"]);
+                                  break;
+                              }
+                          });
                         });
-                      });
-                  }
-                  return (
-                    `${added.join(", ")}` +
-                    (removed.length ? ` (${removed.join(", ")})` : "")
-                  );
-                })(),
-                (() => {
-                  let added: string[] = [],
-                    removed: string[] = [];
-                  for (let _i = 1; _i <= 5; _i++) {
-                    let e = i[`position${_i}`];
-                    if (e)
-                      e.forEach((e: any) => {
-                        ["current", "removed"].forEach((_) => {
-                          if (e[_] && e[_]["type"] == "TEACHER")
-                            switch (e[_]["status"]) {
-                              case "REMOVED":
-                                removed.push(e[_]["shortName"]);
-                                break;
-
-                              default:
-                                added.push(e[_]["shortName"]);
-                                break;
-                            }
-                        });
-                      });
-                  }
-                  return (
-                    `${added.join(", ")}` +
-                    (removed.length ? ` (${removed.join(", ")})` : "")
-                  );
-                })(),
-                i["status"] == "CANCELLED",
-                [i["status"], i["statusDetail"]]
-              )
-            );
+                    }
+                    return (
+                      `${added.join(", ")}` +
+                      (removed.length ? ` (${removed.join(", ")})` : "")
+                    );
+                  })(),
+                  i["status"] == "CANCELLED",
+                  [i["status"], i["statusDetail"]]
+                )
+              );
+          });
         });
         resolve(a);
       } catch (error) {

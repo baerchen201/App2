@@ -77,8 +77,21 @@ except (ValueError, TypeError):
 
 day = (date.today() + timedelta(offset)).strftime(r"%Y-%m-%d")
 
+classes = get(
+    f"{config["server"]}/api/rest/view/v1/timetable/filter?resourceType=CLASS&timetableType=STANDARD",
+    cookies=auth.cookies,
+    headers={"Authorization": token},
+)
+
+class_list: list[int] = []
+try:
+    for i in classes.json()["classes"]:
+        class_list.append(i["class"]["id"])
+except (json.decoder.JSONDecodeError, KeyError) as e:
+    err(f"An error occurred while requesting class list:\n{type(e).__name__} - {e}")
+
 entries = get(
-    f"{config["server"]}/api/rest/view/v1/timetable/entries?start={day}&end={day}&format=1&resourceType=CLASS&resources=1050&timetableType=STANDARD",
+    f"{config["server"]}/api/rest/view/v1/timetable/entries?start={day}&end={day}&format=1&resourceType=CLASS&resources={",".join([str(i) for i in class_list])}&timetableType=STANDARD",
     cookies=auth.cookies,
     headers={"Authorization": token},
 )
