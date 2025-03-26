@@ -7,6 +7,7 @@ class data {
   raum: string;
   lehrkraft: string;
   ausfall: boolean;
+  classes: string[];
 
   constructor(
     stunde: string,
@@ -14,7 +15,8 @@ class data {
     fach: string,
     raum: string,
     lehrkraft: string,
-    ausfall: boolean = false
+    ausfall: boolean = false,
+    classes: string[] = []
   ) {
     this.stunde = stunde;
     this.klasse = klasse;
@@ -22,6 +24,7 @@ class data {
     this.raum = raum;
     this.lehrkraft = lehrkraft;
     this.ausfall = ausfall;
+    this.classes = classes;
   }
 }
 
@@ -29,65 +32,73 @@ function random(max: number, offset: number = 0) {
   return Math.floor(Math.random() * max) + offset;
 }
 
-function getDataForDay(date: Date): data[] {
-  const EXAMPLE_DATA = [
-    [
-      new data("4", "1a", "M", "0.10 (0.15)", "Ab"),
-      new data("2", "4b", "D", "0.14", "Ab", true),
-      new data("5", "3.1", "KS", "0.62", "Dd", true),
-      new data("5", "9.2", "G", "1.02", "Bc", true),
-      new data("12", "200.1", "E", "2.46", "De", true),
-      new data("2", ["a6", "5d", "6a", "6.1", "6.0"], "D", "7.11 (2.44)", "De"),
-    ],
-    [],
-    [],
-  ];
-  let _ = [..."abcdefghijklmnopqrstuvwxyz"];
-  let l = 20;
-  for (let _index = 1; _index <= 2; _index++) {
-    for (let i = 0; i < l; i++) {
-      EXAMPLE_DATA[_index].push(
-        new data(
-          random(20, 4).toString(_index == 1 ? 16 : 10),
-          random(6) == 1
-            ? Math.floor((l + 1 - i) / 2).toString() + (i % 2 == 0 ? "a" : "b")
-            : [
-                Math.floor((l + 1 - i) / 2).toString() +
-                  (i % 2 == 0 ? "a" : "b"),
-                Math.floor((l + 1 - i) / 2).toString() +
-                  (i % 2 != 0 ? "a" : "b"),
-              ],
-          ["D", "E", "F", "M", "KS", "G"][random(6)],
-          `${random(2)}.${random(18) > 9 ? 0 : random(6)}${random(9)}`,
-          _[random(_.length)].toUpperCase() + _[random(_.length)].toLowerCase(),
-          true
-        )
-      );
+function stunde(e: { start: string; end: string }) {
+  let start, end;
+  start = ((i: string) => {
+    switch (i.split("T")[1]) {
+      case "07:40":
+        return 1;
+      case "08:25":
+        return 2;
+      case "09:35":
+        return 3;
+      case "10:20":
+        return 4;
+      case "11:30":
+        return 5;
+      case "12:15":
+        return 6;
+      case "13:00":
+        return 7;
+      case "14:00":
+        return 8;
+      case "14:45":
+        return 9;
+      case "15:30":
+        return 10;
+      case "16:15":
+        return 11;
+      case "17:00":
+        return 12;
+      default:
+        return -1;
     }
-  }
-  for (let i = 0; i < l; i++) {
-    EXAMPLE_DATA[2].push(
-      new data(
-        random(20, 4).toString(16),
-        random(6) != 1
-          ? Math.floor((l + 1 - i) / 2).toString() +
-            "." +
-            Math.floor((l + 1 - i) / 5).toString()
-          : [
-              Math.floor((l + random(9) - i) / 2).toString() +
-                "." +
-                Math.floor((l + random(9) - i) / 5).toString(),
-              Math.floor((l + random(9) - i) / 2).toString() +
-                "." +
-                Math.floor((l + random(9) - i) / 5).toString(),
-            ],
-        ["D", "E", "F", "M", "KS", "G"][random(6)],
-        `${random(2)}.${random(18) > 9 ? 0 : random(6)}${random(9)}`,
-        _[random(_.length)].toUpperCase() + _[random(_.length)].toLowerCase(),
-        true
-      )
-    );
-  }
+  })(e["start"]);
+  end = ((i: string) => {
+    switch (i.split("T")[1]) {
+      case "08:25":
+        return 1;
+      case "09:10":
+        return 2;
+      case "10:20":
+        return 3;
+      case "11:05":
+        return 4;
+      case "12:15":
+        return 5;
+      case "13:00":
+        return 6;
+      case "14:00":
+        return 7;
+      case "14:45":
+        return 8;
+      case "15:30":
+        return 9;
+      case "16:15":
+        return 10;
+      case "17:00":
+        return 11;
+      case "17:45":
+        return 12;
+      default:
+        return 0;
+    }
+  })(e["end"]);
+  if (start == end) return start.toString();
+  return `${start} - ${end}`;
+}
+
+async function getDataForDay(date: Date): Promise<data[]> {
   let day = Math.floor(
     (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) -
       ((d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))(
@@ -99,7 +110,111 @@ function getDataForDay(date: Date): data[] {
   console.log(
     `Requested data for day ${date.toDateString()} (offset of ${day})`
   );
-  return EXAMPLE_DATA[day % EXAMPLE_DATA.length];
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", `day.php?day=${day}`);
+    xhr.addEventListener("readystatechange", (e: Event) => {
+      if (xhr.readyState != 4) return;
+      if (xhr.status != 200) reject(xhr);
+      try {
+        let json: { days: { [id: string]: any }[]; errors: any[] } = JSON.parse(
+          xhr.responseText
+        );
+        let a: data[] = [];
+        json["days"][0]["gridEntries"].forEach(async (i: any) => {
+          if (i["status"] != "REGULAR")
+            a.push(
+              new data(
+                stunde(i["moved"] ?? i["duration"]),
+                [
+                  json["days"][0]["resource"]["shortName"],
+                  ...(() => {
+                    let _: string[] = [];
+                    for (let _i = 1; _i <= 5; _i++) {
+                      let e = i[`position${_i}`];
+                      if (e)
+                        e.forEach((e: any) => {
+                          if (e["current"]["type"] == "CLASS")
+                            _.push(e["current"]["shortName"]);
+                        });
+                    }
+                    return _;
+                  })(),
+                ],
+                await new Promise((resolve, reject) => {
+                  for (let _i = 1; _i <= 5; _i++) {
+                    let e = i[`position${_i}`];
+                    if (e)
+                      e.forEach((e: any) => {
+                        if (e["current"]["type"] == "SUBJECT")
+                          resolve(e["current"]["shortName"]);
+                      });
+                  }
+                }),
+                (() => {
+                  let added: string[] = [],
+                    removed: string[] = [];
+                  for (let _i = 1; _i <= 5; _i++) {
+                    let e = i[`position${_i}`];
+                    if (e)
+                      e.forEach((e: any) => {
+                        ["current", "removed"].forEach((_) => {
+                          if (e[_] && e[_]["type"] == "ROOM")
+                            switch (e[_]["status"]) {
+                              case "REMOVED":
+                                removed.push(e[_]["shortName"]);
+                                break;
+
+                              default:
+                                added.push(e[_]["shortName"]);
+                                break;
+                            }
+                        });
+                      });
+                  }
+                  return (
+                    `${added.join(", ")}` +
+                    (removed.length ? ` (${removed.join(", ")})` : "")
+                  );
+                })(),
+                (() => {
+                  let added: string[] = [],
+                    removed: string[] = [];
+                  for (let _i = 1; _i <= 5; _i++) {
+                    let e = i[`position${_i}`];
+                    if (e)
+                      e.forEach((e: any) => {
+                        ["current", "removed"].forEach((_) => {
+                          if (e[_] && e[_]["type"] == "TEACHER")
+                            switch (e[_]["status"]) {
+                              case "REMOVED":
+                                removed.push(e[_]["shortName"]);
+                                break;
+
+                              default:
+                                added.push(e[_]["shortName"]);
+                                break;
+                            }
+                        });
+                      });
+                  }
+                  return (
+                    `${added.join(", ")}` +
+                    (removed.length ? ` (${removed.join(", ")})` : "")
+                  );
+                })(),
+                i["status"] == "CANCELLED",
+                [i["status"], i["statusDetail"]]
+              )
+            );
+        });
+        resolve(a);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    xhr.send();
+  });
 }
 
 window.addEventListener("load", async () => {
@@ -136,8 +251,8 @@ window.addEventListener("load", async () => {
     AeqB = 0,
     AltB = -1;
 
-  let klassen: { [id: string]: HTMLElement[][] } = {};
-  getDataForDay(date)
+  let klassen: { [id: string]: (HTMLElement | string[])[][] } = {};
+  (await getDataForDay(date))
     .sort((a: data, b: data) => {
       let r = /-?\d+/;
       let sA = a.stunde.match(r),
@@ -158,37 +273,45 @@ window.addEventListener("load", async () => {
 
       _.forEach((k: string) => {
         if (!Object.keys(klassen).includes(k)) klassen[k] = [];
-        let a = [];
+        let a: (HTMLElement | string[])[] = [i.classes];
 
         let stunde = document.createElement("span");
         stunde.innerText = i.stunde;
-        stunde.classList.add("stunde");
+        stunde.classList.add("stunde", ...i.classes);
         a.push(stunde);
 
         let klasse = document.createElement(i.ausfall ? "s" : "span");
         klasse.innerText =
           typeof i.klasse == "string" ? i.klasse : i.klasse.join(", ");
-        klasse.classList.add("klasse");
+        klasse.classList.add("klasse", ...i.classes);
         a.push(klasse);
 
         let fach = document.createElement(i.ausfall ? "s" : "span");
         fach.innerText = i.fach;
-        fach.classList.add("fach");
+        fach.classList.add("fach", ...i.classes);
         a.push(fach);
 
         let raum = document.createElement(i.ausfall ? "s" : "span");
         raum.innerText = i.raum;
-        raum.classList.add("raum");
+        raum.classList.add("raum", ...i.classes);
         a.push(raum);
 
         let lehrkraft = document.createElement(i.ausfall ? "s" : "span");
         lehrkraft.innerText = i.lehrkraft;
-        lehrkraft.classList.add("lehrkraft");
+        lehrkraft.classList.add("lehrkraft", ...i.classes);
         a.push(lehrkraft);
 
         klassen[k].push(a);
       });
     });
+
+  if (Object.keys(klassen).length == 0) {
+    document.querySelector("span")!.innerText = "Keine Änderungen";
+    document.body.classList.add("none");
+    window.parent.postMessage(true);
+    document.body.classList.remove("updating");
+    return;
+  }
 
   let c = false,
     d = false;
@@ -216,13 +339,17 @@ window.addEventListener("load", async () => {
       return AgtB;
     })
     .forEach((k: string) => {
-      klassen[k].forEach((a: HTMLElement[]) => {
+      klassen[k].forEach((a: (HTMLElement | string[])[]) => {
         let klasse1 = document.createElement("span");
         klasse1.innerText = k;
-        klasse1.classList.add("klasse1", c ? "c1" : "c0");
+        klasse1.classList.add(
+          "klasse1",
+          c ? "c1" : "c0",
+          ...(a.shift() as string[])
+        );
         main.appendChild(klasse1);
 
-        a.forEach((e: HTMLElement) => {
+        (a as HTMLElement[]).forEach((e: HTMLElement) => {
           e.classList.add(d ? "d1" : "d0");
           main.appendChild(e);
         });
