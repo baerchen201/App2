@@ -25,6 +25,15 @@
         "reveal": "silent",
         "clear": true
       }
+    },
+    {
+      "type": "shell",
+      "command": ["php", "-S", "127.0.0.1:3000"],
+      "group": "test",
+      "label": "php - dev server",
+      "presentation": {
+        "clear": true
+      }
     }
   ]
 }
