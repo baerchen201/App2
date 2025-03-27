@@ -1,3 +1,6 @@
+const SHOW_ALL = new URLSearchParams(location.search).has("all"),
+  USE_EXAMPLE_DATA = new URLSearchParams(location.search).has("example");
+
 console.log("Hello, World!");
 
 class data {
@@ -29,6 +32,14 @@ class data {
     this.ausfall = ausfall;
     this.classes = classes;
   }
+}
+
+interface Iinfo {
+  type: "INFO";
+  status: "REGULAR";
+  shortName: string;
+  longName: string;
+  displayName: string;
 }
 
 function random(max: number, offset: number = 0) {
@@ -111,11 +122,15 @@ async function getDataForDay(date: Date): Promise<data[]> {
   );
 
   console.log(
-    `Requested data for day ${date.toDateString()} (offset of ${day})`
+    `Requested data for day ${date.toDateString()} (offset of ${day})` +
+      (USE_EXAMPLE_DATA ? " [EXAMPLE]" : "")
   );
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", `day.php?day=${day}`);
+    xhr.open(
+      "GET",
+      (!USE_EXAMPLE_DATA ? "day.php" : "example.php") + `?day=${day}`
+    );
     xhr.addEventListener("readystatechange", (e: Event) => {
       if (xhr.readyState != XMLHttpRequest.DONE) return;
       if (xhr.status != 200)
@@ -126,92 +141,115 @@ async function getDataForDay(date: Date): Promise<data[]> {
         );
         let a: data[] = [];
         json["days"].forEach((day) => {
-          day["gridEntries"].forEach(async (i: any) => {
-            if (i["status"] != "REGULAR")
+          day["gridEntries"].forEach((i: any) => {
+            if (SHOW_ALL || i["status"] != "REGULAR")
               a.push(
-                new data(
-                  stunde(i["moved"] ?? i["duration"]),
-                  [
-                    day["resource"]["shortName"],
-                    ...(() => {
-                      let _: string[] = [];
-                      for (let _i = 1; _i <= 5; _i++) {
-                        let e = i[`position${_i}`];
-                        if (e)
-                          e.forEach((e: any) => {
-                            if (e["current"]["type"] == "CLASS")
-                              _.push(e["current"]["shortName"]);
-                          });
-                      }
-                      return _;
-                    })(),
-                  ],
-                  await new Promise((resolve, reject) => {
-                    for (let _i = 1; _i <= 5; _i++) {
-                      let e = i[`position${_i}`];
-                      if (e)
-                        e.forEach((e: any) => {
-                          if (e["current"]["type"] == "SUBJECT")
-                            resolve(e["current"]["shortName"]);
-                        });
-                    }
-                  }),
-                  (() => {
-                    let added: string[] = [],
-                      removed: string[] = [];
-                    for (let _i = 1; _i <= 5; _i++) {
-                      let e = i[`position${_i}`];
-                      if (e)
-                        e.forEach((e: any) => {
-                          ["current", "removed"].forEach((_) => {
-                            if (e[_] && e[_]["type"] == "ROOM")
-                              switch (e[_]["status"]) {
-                                case "REMOVED":
-                                  removed.push(e[_]["shortName"]);
-                                  break;
+                (() => {
+                  let rooms: { added: string[]; removed: string[] } = {
+                      added: [],
+                      removed: [],
+                    },
+                    teachers: { added: string[]; removed: string[] } = {
+                      added: [],
+                      removed: [],
+                    },
+                    classes: { added: string[]; removed: string[] } = {
+                      added: [day["resource"]["shortName"]],
+                      removed: [],
+                    },
+                    info: Iinfo[] = [],
+                    subject: string[] = [];
+                  for (let _i = 1; _i <= 5; _i++) {
+                    let pos = i[`position${_i}`];
+                    if (pos)
+                      pos.forEach((item: any) => {
+                        ["current", "removed"].forEach((_) => {
+                          if (item[_])
+                            switch (item[_]["type"]) {
+                              case "TEACHER":
+                                switch (item[_]["status"]) {
+                                  case "REMOVED":
+                                    teachers["removed"].push(
+                                      item[_]["shortName"]
+                                    );
+                                    break;
 
-                                default:
-                                  added.push(e[_]["shortName"]);
-                                  break;
-                              }
-                          });
-                        });
-                    }
-                    return (
-                      `${added.join(", ")}` +
-                      (removed.length ? ` (${removed.join(", ")})` : "")
-                    );
-                  })(),
-                  (() => {
-                    let added: string[] = [],
-                      removed: string[] = [];
-                    for (let _i = 1; _i <= 5; _i++) {
-                      let e = i[`position${_i}`];
-                      if (e)
-                        e.forEach((e: any) => {
-                          ["current", "removed"].forEach((_) => {
-                            if (e[_] && e[_]["type"] == "TEACHER")
-                              switch (e[_]["status"]) {
-                                case "REMOVED":
-                                  removed.push(e[_]["shortName"]);
-                                  break;
+                                  default:
+                                    teachers["added"].push(
+                                      item[_]["shortName"]
+                                    );
+                                    break;
+                                }
+                                break;
 
-                                default:
-                                  added.push(e[_]["shortName"]);
-                                  break;
-                              }
-                          });
+                              case "ROOM":
+                                switch (item[_]["status"]) {
+                                  case "REMOVED":
+                                    rooms["removed"].push(item[_]["shortName"]);
+                                    break;
+
+                                  default:
+                                    rooms["added"].push(item[_]["shortName"]);
+                                    break;
+                                }
+                                break;
+
+                              case "CLASS":
+                                switch (item[_]["status"]) {
+                                  case "REMOVED":
+                                    classes["removed"].push(
+                                      item[_]["shortName"]
+                                    );
+                                    break;
+
+                                  default:
+                                    classes["added"].push(item[_]["shortName"]);
+                                    break;
+                                }
+                                break;
+
+                              case "SUBJECT":
+                                if (item[_]["status"] == "REGULAR")
+                                  subject.push(item[_]["shortName"]);
+                                break;
+
+                              case "INFO":
+                                if (item[_]["status"] == "REGULAR")
+                                  info.push(item[_]);
+                                break;
+                            }
                         });
-                    }
-                    return (
-                      `${added.join(", ")}` +
-                      (removed.length ? ` (${removed.join(", ")})` : "")
-                    );
-                  })(),
-                  i["ids"] ?? [],
-                  i["status"] == "CANCELLED",
-                  [i["status"], i["statusDetail"]]
-                )
+                      });
+                  }
+
+                  return new data(
+                    stunde(i["moved"] ?? i["duration"]),
+                    classes["added"],
+                    subject.length
+                      ? subject.join(", ")
+                      : info
+                          .map((e: Iinfo) => {
+                            return e["displayName"].length < 15
+                              ? e["displayName"]
+                              : e["shortName"];
+                          })
+                          .filter((e: string) => {
+                            return e.length < 15;
+                          })
+                          .join(", "),
+                    `${rooms["added"].join(", ")}` +
+                      (rooms["removed"].length
+                        ? ` (${rooms["removed"].join(", ")})`
+                        : ""),
+                    `${teachers["added"].join(", ")}` +
+                      (teachers["removed"].length
+                        ? ` (${teachers["removed"].join(", ")})`
+                        : ""),
+                    i["ids"] ?? [],
+                    i["status"] == "CANCELLED",
+                    [i["status"], i["statusDetail"]]
+                  );
+                })()
               );
           });
         });
