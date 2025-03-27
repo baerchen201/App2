@@ -6,6 +6,7 @@ class data {
   fach: string;
   raum: string;
   lehrkraft: string;
+  id: number[];
   ausfall: boolean;
   classes: string[];
 
@@ -15,6 +16,7 @@ class data {
     fach: string,
     raum: string,
     lehrkraft: string,
+    id: number[],
     ausfall: boolean = false,
     classes: string[] = []
   ) {
@@ -23,6 +25,7 @@ class data {
     this.fach = fach;
     this.raum = raum;
     this.lehrkraft = lehrkraft;
+    this.id = id;
     this.ausfall = ausfall;
     this.classes = classes;
   }
@@ -205,6 +208,7 @@ async function getDataForDay(date: Date): Promise<data[]> {
                       (removed.length ? ` (${removed.join(", ")})` : "")
                     );
                   })(),
+                  i["ids"] ?? [],
                   i["status"] == "CANCELLED",
                   [i["status"], i["statusDetail"]]
                 )
@@ -258,6 +262,7 @@ window.addEventListener("load", async () => {
   getDataForDay(date)
     .then(async (__data: data[]) => {
       try {
+        let processed: number[] = [];
         __data
           .sort((a: data, b: data) => {
             let r = /-?\d+/;
@@ -272,6 +277,16 @@ window.addEventListener("load", async () => {
           })
           .forEach((i: data, index: number, array: data[]) => {
             console.log("Processing", i);
+
+            if (
+              !i.id.every((e: number) => {
+                if (processed.includes(e)) return false;
+                return true;
+              })
+            )
+              return;
+
+            i.id.forEach((id: number) => processed.push(id));
 
             // @ts-ignore
             let _: string[] = i.klasse;
