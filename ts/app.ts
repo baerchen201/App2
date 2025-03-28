@@ -75,7 +75,7 @@ function stunde(e: { start: string; end: string }) {
       case "17:00":
         return 12;
       default:
-        return -1;
+        return null;
     }
   })(e["start"]);
   end = ((i: string) => {
@@ -105,24 +105,36 @@ function stunde(e: { start: string; end: string }) {
       case "17:45":
         return 12;
       default:
-        return 0;
+        return null;
     }
   })(e["end"]);
+  if (!start || !end)
+    return `${e["start"].split("T")[1]} - ${e["end"].split("T")[1]}`;
   if (start == end) return start.toString();
   return `${start} - ${end}`;
 }
 
-async function getDataForDay(date: Date): Promise<data[]> {
-  let day = Math.floor(
-    (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) -
-      ((d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))(
-        new Date()
-      )) /
-      86400000
+function dayOffset(day: number): Date {
+  return ((d: Date) => {
+    let weekday = d.getDay() == 0 ? 6 : d.getDay() - 1;
+    return new Date(
+      d.valueOf() +
+        (() =>
+          day + 2 * Math.floor(day / 5) + (weekday + (day % 5) < 5 ? 0 : 2))() *
+          86400000
+    );
+  })(
+    ((d) => new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())))(
+      new Date()
+    )
   );
+}
 
+async function getDataForDay(day: number): Promise<data[]> {
   console.log(
-    `Requested data for day ${date.toDateString()} (offset of ${day})` +
+    `Requested data for day ${dayOffset(
+      day
+    ).toDateString()} (offset of ${day})` +
       (USE_EXAMPLE_DATA ? " [EXAMPLE]" : "")
   );
   return new Promise((resolve, reject) => {
@@ -267,16 +279,7 @@ window.addEventListener("load", async () => {
   let day = 0;
   if (args.has("day")) day = Number(args.get("day"));
 
-  let date = new Date(new Date().valueOf() + 86400000 * day);
-
-  switch (date.getDay()) {
-    case 6:
-      date = new Date(date.valueOf() + 86400000 * 2);
-      break;
-    case 0:
-      date = new Date(date.valueOf() + 86400000);
-      break;
-  }
+  let date = dayOffset(day);
 
   document.querySelector("h2")!.innerText += date.toLocaleDateString("de-DE", {
     weekday: "long",
@@ -297,7 +300,7 @@ window.addEventListener("load", async () => {
     AltB = -1;
 
   let klassen: { [id: string]: (HTMLElement | string[])[][] } = {};
-  getDataForDay(date)
+  getDataForDay(day)
     .then(async (__data: data[]) => {
       try {
         let processed: number[] = [];

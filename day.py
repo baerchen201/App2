@@ -75,7 +75,10 @@ try:
 except (ValueError, TypeError):
     pass
 
-day = (date.today() + timedelta(offset)).strftime(r"%Y-%m-%d")
+day = (
+    lambda d, x: d
+    + timedelta(days=x + 2 * (x // 5) + (0 if (d.weekday() + x % 5) < 5 else 2))
+)(date.today(), offset).strftime(r"%Y-%m-%d")
 
 classes = get(
     f"{config["server"]}/api/rest/view/v1/timetable/filter?resourceType=CLASS&timetableType=STANDARD",
