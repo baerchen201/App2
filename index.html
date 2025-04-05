@@ -8,6 +8,13 @@
     <meta http-equiv="refresh" content="300" />
   </head>
   <body class="updating">
+    <script>
+      let s = document.createElement("div"),
+        f = () => (s.innerText = new Date().toLocaleTimeString("de-DE"));
+      document.body.appendChild(s);
+      f();
+      setInterval(f, 100);
+    </script>
     <script src="ts/index.js"></script>
 
     <iframe src="app.html" frameborder="0"></iframe>
