@@ -15,9 +15,9 @@ while True:
     json: dict[
         Literal["text", "author", "tags", "id", "author_id"], str | list[str] | int
     ] = r.json()
-    if len(json["text"]) < 200:
+    if len(json["text"]) < 150:
         break
     sleep(1)
 print(
-    f"<div style=\"font-size: 2rem\">{escape(json['text']).replace("\n", "<br />")}<br /><i> - {escape(json['author'])}</i></div>"
+    f"<div style=\"font-size: 1.5rem\">{escape(json['text']).replace("\n", "<br />")}<br /><i> - {escape(json['author'])}</i></div>"
 )

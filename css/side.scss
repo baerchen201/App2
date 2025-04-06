@@ -5,7 +5,7 @@ body {
   margin: 0;
   height: 100vh;
   display: grid;
-  grid-template-rows: 400px auto;
+  grid-template-rows: 500px auto;
   overflow: hidden;
 
   font-family: Roboto, "Segoe UI", system-ui;
@@ -19,6 +19,7 @@ body {
   }
 
   #clock {
+    transform: scale(1.2) translateY(45px);
     .clock {
       background: #ececec;
       width: 300px;
@@ -200,7 +201,7 @@ body {
     }
 
     > .t {
-      font-size: 2rem;
+      font-size: 1.5rem;
     }
 
     &.errorc {
