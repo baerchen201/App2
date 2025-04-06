@@ -181,6 +181,8 @@ body {
     justify-content: center;
     align-items: center;
 
+    color: #bbb;
+
     &:has(.i) {
       display: block;
       position: relative;
@@ -201,6 +203,7 @@ body {
     }
 
     &.errorc {
+      color: #000;
       box-shadow: 0 0 8px red;
       &::after {
         position: absolute;
@@ -214,6 +217,7 @@ body {
 
   &.updating {
     > #info {
+      color: #000;
       &::before {
         content: "";
         position: absolute;
@@ -230,7 +234,7 @@ body {
         content: "";
         position: absolute;
         inset: 0;
-        background: #fffc;
+        background: #222c;
         display: flex;
         justify-content: center;
         align-items: center;
