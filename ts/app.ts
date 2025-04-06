@@ -516,6 +516,6 @@ function error(title: string, text: string, innerText: boolean = true) {
   container.appendChild(title_element);
   container.appendChild(text_element);
   container.classList.add("error");
-  document.body.classList.add("error");
+  document.body.classList.add("errorc");
   document.body.appendChild(container);
 }
