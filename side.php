@@ -1,4 +1,13 @@
 <?php
-$a = ["iclock.png", "idraw.png", "tHello Guys!\nToday we have a list of\nTop 5 Javascript", "h<h2>Hello Gays</h2><h3>Today we have a list of top 5 coding</h3><img style=\"max-width:100%;\" src=\"coding.png\" />"];
-echo $a[rand(0, count($a) - 1)];
+$result = 0;
+$output = "";
+exec("python3 quote.py 2>&1", $output, $result);
+if ( $result != 0 ) {
+  http_response_code(500);
+  header("Content-Type: text/html");
+  echo "500 Internal Server Error<br />Python exited with code " . strval($result) . "<br /><pre>" . str_replace("\n", "<br />", htmlentities(join("\n", $output))) . "</pre>";
+} else {
+  header("Content-Type: text/plain");
+  echo "h" . join("\n", $output);
+}
 ?>
